@@ -1,6 +1,6 @@
 {
-  "name": "cordova-plugin-code-push",
-  "version": "1.13.1",
+  "name": "@cloudscapelabs/cordova-plugin-code-push",
+  "version": "1.13.1-csl1",
   "description": "CodePush Plugin for Apache Cordova",
   "cordova": {
     "id": "cordova-plugin-code-push",
@@ -11,7 +11,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/cordova-plugin-code-push"
+    "url": "https://github.com/cloudscapelabs/cordova-plugin-code-push"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "keywords": [
     "cordova",
