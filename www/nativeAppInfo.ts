@@ -5,13 +5,23 @@
 
 declare var cordova: Cordova;
 
-const DefaultServerUrl: string = "https://codepush.appcenter.ms/";
+const PREFERENCE_SERVER_URL = "CODE_PUSH_SERVER_URL";
+const PREFERENCE_DEPLOYMENT_KEY = "CODE_PUSH_DEPLOYMENT_KEY";
+
+const getFromWindow = (key: string) => {
+    if (typeof window === "undefined") {
+        return undefined;
+    }
+
+    // @ts-ignore
+    return window[key];
+};
 
 /**
  * Provides information about the native app.
  */
 class NativeAppInfo {
-    
+
     /**
      * Gets the application build timestamp.
      */
@@ -31,7 +41,7 @@ class NativeAppInfo {
 
         cordova.exec(versionSuccess, versionError, "CodePush", "getAppVersion", []);
     }
-    
+
     /**
      * Gets a hash of the `www` folder contents compiled in the app store binary.
      */
@@ -41,15 +51,17 @@ class NativeAppInfo {
 
         cordova.exec(binaryHashSuccess, binaryHashError, "CodePush", "getBinaryHash", []);
     }
-    
+
     /**
      * Gets the server URL from config.xml by calling into the native platform.
      */
     public static getServerURL(serverCallback: Callback<String>): void {
+        if (getFromWindow(PREFERENCE_SERVER_URL) !== undefined) {
+            return serverCallback(null, getFromWindow(PREFERENCE_SERVER_URL));
+        }
+
         var serverSuccess = (serverURL?: String) => { serverCallback(null, serverURL); };
-        
-        /* Default to the production CodePush server. */
-        var serverError = () => { serverCallback(null, DefaultServerUrl); };
+        var serverError = () => { serverCallback(new Error("Unable to find codepush serverUrl."), null); };
 
         cordova.exec(serverSuccess, serverError, "CodePush", "getServerURL", []);
     }
@@ -58,12 +70,16 @@ class NativeAppInfo {
      * Gets the deployment key from config.xml by calling into the native platform.
      */
     public static getDeploymentKey(deploymentKeyCallback: Callback<String>): void {
+        if (getFromWindow(PREFERENCE_DEPLOYMENT_KEY) !== undefined) {
+            return deploymentKeyCallback(null, getFromWindow(PREFERENCE_SERVER_URL));
+        }
+
         var deploymentSuccess = (deploymentKey?: String) => { deploymentKeyCallback(null, deploymentKey); };
         var deploymentError = () => { deploymentKeyCallback(new Error("Deployment key not found."), null); };
 
         cordova.exec(deploymentSuccess, deploymentError, "CodePush", "getDeploymentKey", []);
     }
-    
+
     /**
      * Checks if a package update was previously attempted but failed for a given package hash.
      * Every reverted update is stored such that the application developer has the option to ignore
@@ -81,11 +97,11 @@ class NativeAppInfo {
 
         cordova.exec(win, fail, "CodePush", "isFailedUpdate", [packageHash]);
     }
-    
+
     /**
      * Checks if this is the first application run of a package after it has been applied.
      * The didUpdateCallback callback can be used for migrating data from the old app version to the new one.
-     * 
+     *
      * @param packageHash The hash value of the package.
      * @param firstRunCallback Callback invoked with a boolean parameter indicating if this is the first run after an update.
      */
@@ -100,7 +116,7 @@ class NativeAppInfo {
 
         cordova.exec(win, fail, "CodePush", "isFirstRun", [packageHash]);
     }
-    
+
     /**
      * Checks with the native side if there is a pending update.
      */
