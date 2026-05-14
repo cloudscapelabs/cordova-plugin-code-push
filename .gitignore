@@ -8,3 +8,4 @@ bin/*
 #ignore the test output files
 test-*
 
+.idea

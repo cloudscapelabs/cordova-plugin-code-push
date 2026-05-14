@@ -6,6 +6,7 @@
 //  Copyright © 2016 JWTIO. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import "CodePushJWTCoding.h"
 
 // encode and decode options

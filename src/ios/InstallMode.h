@@ -1,3 +1,4 @@
+#import <Foundation/Foundation.h>
 enum {
     IMMEDIATE = 0,
     ON_NEXT_RESTART = 1,

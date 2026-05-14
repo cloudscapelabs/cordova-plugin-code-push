@@ -1,3 +1,4 @@
+#import <Foundation/Foundation.h>
 enum {
     STORE_VERSION = 0,
     UPDATE_CONFIRMED = 1,
