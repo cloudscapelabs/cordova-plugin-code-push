@@ -137,6 +137,34 @@ StatusReport* rollbackStatusReport = nil;
     }
 }
 
+// Called from CDVWKWebViewEngine+CodePush.m once the currently installed CodePush package has
+// repeatedly failed to load in the WebView. Mirrors handleUnconfirmedInstall: above: records a
+// rollback status report (picked up and sent the next time the app calls notifyApplicationReady,
+// exactly like any other rollback), reverts to the last known-good package via
+// CodePushPackageManager (which also blacklists the failed package's hash so it won't be
+// reinstalled), and loads it - or, if there is no previous package (or it also can't be loaded),
+// falls back to the original app store/binary version. This is intentionally silent: a broken
+// CodePush update should never leave the user stuck, and the existing rollback-reporting path
+// already surfaces the failure to the CodePush server and JS console without any new plumbing.
+- (void)handleWebViewLoadFailure {
+    CodePushPackageMetadata* failedMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+    if (failedMetadata) {
+        rollbackStatusReport = [[StatusReport alloc] initWithStatus:UPDATE_ROLLED_BACK
+                                                           andLabel:failedMetadata.label
+                                                      andAppVersion:failedMetadata.appVersion
+                                                   andDeploymentKey:failedMetadata.deploymentKey];
+    }
+
+    [CodePushPackageManager revertToPreviousVersion];
+
+    CodePushPackageMetadata* revertedMetadata = [CodePushPackageManager getCurrentPackageMetadata];
+    BOOL loadedPreviousPackage = (nil != revertedMetadata && [self loadPackage:revertedMetadata.localPath]);
+    if (!loadedPreviousPackage) {
+        /* No usable previous package (or it couldn't be loaded either) - fall back to the binary version. */
+        [self loadStoreVersion];
+    }
+}
+
 - (void)notifyApplicationReady:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
         if ([CodePushPackageManager isBinaryFirstRun]) {
